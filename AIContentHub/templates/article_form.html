@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if article %}编辑文章{% else %}创建新文章{% endif %} - AI内容创作平台
+{% endblock %}
+
+{% block styles %}
+<!-- Summernote CSS -->
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+<style>
+    .note-editor {
+        margin-bottom: 20px;
+    }
+    .image-preview {
+        max-width: 150px;
+        max-height: 150px;
+        margin: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px;
+    }
+    .image-preview-container {
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+    .image-item {
+        position: relative;
+        margin: 5px;
+    }
+    .image-remove {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: rgba(255,0,0,0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        text-align: center;
+        padding: 0;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="mb-3">
+            <i class="fas {% if article %}fa-edit{% else %}fa-plus-circle{% endif %} me-2"></i>
+            {% if article %}编辑文章{% else %}创建新文章{% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="articleForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="title" class="form-label">文章标题</label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ article.title if article else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">分类</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">-- 选择分类 --</option>
+                            <option value="technology" {% if article and article.category == 'technology' %}selected{% endif %}>科技</option>
+                            <option value="business" {% if article and article.category == 'business' %}selected{% endif %}>商业</option>
+                            <option value="health" {% if article and article.category == 'health' %}selected{% endif %}>健康</option>
+                            <option value="lifestyle" {% if article and article.category == 'lifestyle' %}selected{% endif %}>生活方式</option>
+                            <option value="education" {% if article and article.category == 'education' %}selected{% endif %}>教育</option>
+                            <option value="entertainment" {% if article and article.category == 'entertainment' %}selected{% endif %}>娱乐</option>
+                            <option value="sports" {% if article and article.category == 'sports' %}selected{% endif %}>体育</option>
+                            <option value="other" {% if article and article.category == 'other' %}selected{% endif %}>其他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="summary" class="form-label">摘要</label>
+                        <textarea class="form-control" id="summary" name="summary" rows="3">{{ article.summary if article else '' }}</textarea>
+                        <div class="form-text">简短描述文章内容，用于列表展示和发布平台的摘要</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">文章内容</label>
+                        <textarea class="form-control" id="content" name="content" rows="15">{{ article.content if article else '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="images" class="form-label">上传图片</label>
+                        <input class="form-control" type="file" id="images" name="images" multiple accept="image/*">
+                        <div class="form-text">可以选择多张图片上传，支持JPG、PNG、GIF格式</div>
+                    </div>
+                    
+                    {% if article and images %}
+                    <div class="mb-3">
+                        <label class="form-label">已上传图片</label>
+                        <div class="image-preview-container">
+                            {% for image in images %}
+                            <div class="image-item">
+                                <img src="{{ url_for('main.uploaded_file', filename=image.filename) }}" class="image-preview" alt="{{ image.original_filename }}">
+                                <button type="button" class="image-remove" data-image-id="{{ image.id }}">×</button>
+                                <div class="text-center">
+                                    <small class="text-muted">{{ image.original_filename }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('main.articles') }}" class="btn btn-secondary">取消</a>
+                        <div>
+                            <button type="submit" class="btn btn-primary">保存</button>
+                            {% if article %}
+                            <a href="{{ url_for('main.publish_article', article_id=article.id) }}" class="btn btn-success ms-2">发布</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Summernote JS -->
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/lang/summernote-zh-CN.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // 初始化富文本编辑器
+        $('#content').summernote({
+            height: 500,
+            lang: 'zh-CN',
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'underline', 'clear']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link', 'picture']],
+                ['view', ['fullscreen', 'codeview', 'help']]
+            ],
+            callbacks: {
+                onImageUpload: function(files) {
+                    // 这里可以实现自定义图片上传
+                    for (let i = 0; i < files.length; i++) {
+                        uploadImage(files[i]);
+                    }
+                }
+            }
+        });
+        
+        // 图片上传函数
+        function uploadImage(file) {
+            let formData = new FormData();
+            formData.append('file', file);
+            formData.append('csrf_token', '{{ csrf_token() }}');
+            
+            $.ajax({
+                url: '{{ url_for("api.upload_image") }}',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(data) {
+                    $('#content').summernote('insertImage', data.url, data.filename);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error(textStatus + ": " + errorThrown);
+                    alert('图片上传失败');
+                }
+            });
+        }
+        
+        // 删除已上传图片
+        $('.image-remove').click(function() {
+            const imageId = $(this).data('image-id');
+            const imageItem = $(this).closest('.image-item');
+            
+            if (confirm('确定要删除这张图片吗？')) {
+                $.ajax({
+                    url: '{{ url_for("api.delete_image") }}',
+                    method: 'POST',
+                    data: {
+                        image_id: imageId,
+                        csrf_token: '{{ csrf_token() }}'
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            imageItem.remove();
+                        } else {
+                            alert('删除图片失败: ' + data.error);
+                        }
+                    },
+                    error: function() {
+                        alert('删除图片请求失败');
+                    }
+                });
+            }
+        });
+        
+        // 表单提交前验证
+        $('#articleForm').submit(function() {
+            const title = $('#title').val().trim();
+            const content = $('#content').summernote('code');
+            
+            if (!title) {
+                alert('请输入文章标题');
+                return false;
+            }
+            
+            if (!content || content === '<p><br></p>') {
+                alert('请输入文章内容');
+                return false;
+            }
+            
+            return true;
+        });
+    });
+</script>
+{% endblock %}

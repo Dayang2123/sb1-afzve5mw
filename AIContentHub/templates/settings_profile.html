@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}个人资料设置 - AI内容创作平台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fas fa-user"></i> 个人资料设置</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">个人信息</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.settings_profile') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">电子邮箱</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="created_at" class="form-label">注册时间</label>
+                            <input type="text" class="form-control" id="created_at" value="{{ current_user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}" readonly>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">保存个人信息</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">修改密码</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.settings_profile') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">当前密码</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                            <div class="form-text">密码长度至少为8个字符，包含字母和数字</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">修改密码</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">账号信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column align-items-center text-center mb-3">
+                        <div class="avatar-circle mb-3">
+                            <span class="initials">{{ current_user.username[0] | upper }}</span>
+                        </div>
+                        <h5>{{ current_user.username }}</h5>
+                        <p class="text-muted">{{ current_user.email }}</p>
+                        {% if current_user.is_admin %}
+                        <span class="badge bg-danger">管理员</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="list-group">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            文章数量
+                            <span class="badge bg-primary rounded-pill">{{ current_user.articles.count() }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            API配置
+                            <span class="badge bg-primary rounded-pill">{{ current_user.api_configs.count() }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            平台账号
+                            <span class="badge bg-primary rounded-pill">{{ current_user.platform_accounts.count() }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">账号安全</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">密码</h6>
+                                <small class="text-muted">上次修改: {{ current_user.password_changed_at.strftime('%Y-%m-%d') if current_user.password_changed_at else '从未' }}</small>
+                            </div>
+                            <a href="#" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('current_password').focus()">修改</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 密码强度检查
+        document.getElementById('new_password').addEventListener('input', function() {
+            var password = this.value;
+            var strength = 0;
+            
+            if (password.length >= 8) strength += 1;
+            if (/[A-Z]/.test(password)) strength += 1;
+            if (/[a-z]/.test(password)) strength += 1;
+            if (/[0-9]/.test(password)) strength += 1;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+            
+            var strengthText = '';
+            var strengthClass = '';
+            
+            switch(strength) {
+                case 0:
+                case 1:
+                    strengthText = '弱';
+                    strengthClass = 'text-danger';
+                    break;
+                case 2:
+                case 3:
+                    strengthText = '中';
+                    strengthClass = 'text-warning';
+                    break;
+                case 4:
+                case 5:
+                    strengthText = '强';
+                    strengthClass = 'text-success';
+                    break;
+            }
+            
+            this.nextElementSibling.innerHTML = '密码强度: <span class="' + strengthClass + '">' + strengthText + '</span>';
+        });
+        
+        // 密码确认检查
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            var password = document.getElementById('new_password').value;
+            var confirmPassword = this.value;
+            
+            if (password === confirmPassword) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+</script>
+{% endblock %}

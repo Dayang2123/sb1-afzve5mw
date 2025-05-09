@@ -1,0 +1,539 @@
+{% extends "base.html" %}
+
+{% block title %}敏感词管理 - AI内容创作平台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fas fa-filter"></i> 敏感词管理</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addSensitiveWordModal">
+                    <i class="fas fa-plus"></i> 添加敏感词
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importSensitiveWordsModal">
+                    <i class="fas fa-file-import"></i> 导入敏感词
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="sensitiveWordsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="legal-tab" data-bs-toggle="tab" data-bs-target="#legal" type="button" role="tab" aria-controls="legal" aria-selected="true">
+                                <i class="fas fa-gavel"></i> 法律违禁词
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ad-tab" data-bs-toggle="tab" data-bs-target="#ad" type="button" role="tab" aria-controls="ad" aria-selected="false">
+                                <i class="fas fa-ad"></i> 广告法敏感词
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="custom-tab" data-bs-toggle="tab" data-bs-target="#custom" type="button" role="tab" aria-controls="custom" aria-selected="false">
+                                <i class="fas fa-user-edit"></i> 自定义敏感词
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="sensitiveWordsTabContent">
+                        <!-- 法律违禁词 -->
+                        <div class="tab-pane fade show active" id="legal" role="tabpanel" aria-labelledby="legal-tab">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>法律违禁词列表</h5>
+                                <div class="input-group w-50">
+                                    <input type="text" class="form-control" id="legalSearchInput" placeholder="搜索法律违禁词...">
+                                    <button class="btn btn-outline-secondary" type="button" id="legalSearchBtn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {% if legal_words %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="legalWordsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>敏感词</th>
+                                            <th>替换词</th>
+                                            <th>创建时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for word in legal_words %}
+                                        <tr>
+                                            <td>{{ word.word }}</td>
+                                            <td>{{ word.replacement or '***' }}</td>
+                                            <td>{{ word.created_at.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-word-btn" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#editSensitiveWordModal"
+                                                            data-word-id="{{ word.id }}"
+                                                            data-word="{{ word.word }}"
+                                                            data-replacement="{{ word.replacement or '' }}"
+                                                            data-category="{{ word.category }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#deleteSensitiveWordModal"
+                                                            data-word-id="{{ word.id }}"
+                                                            data-word="{{ word.word }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 暂无法律违禁词。您可以点击"添加敏感词"按钮添加，或者导入预设的法律违禁词库。
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" id="importLegalWordsBtn">
+                                <i class="fas fa-download"></i> 导入预设法律违禁词库
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 广告法敏感词 -->
+                        <div class="tab-pane fade" id="ad" role="tabpanel" aria-labelledby="ad-tab">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>广告法敏感词列表</h5>
+                                <div class="input-group w-50">
+                                    <input type="text" class="form-control" id="adSearchInput" placeholder="搜索广告法敏感词...">
+                                    <button class="btn btn-outline-secondary" type="button" id="adSearchBtn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {% if ad_words %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="adWordsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>敏感词</th>
+                                            <th>替换词</th>
+                                            <th>创建时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for word in ad_words %}
+                                        <tr>
+                                            <td>{{ word.word }}</td>
+                                            <td>{{ word.replacement or '***' }}</td>
+                                            <td>{{ word.created_at.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-word-btn" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#editSensitiveWordModal"
+                                                            data-word-id="{{ word.id }}"
+                                                            data-word="{{ word.word }}"
+                                                            data-replacement="{{ word.replacement or '' }}"
+                                                            data-category="{{ word.category }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#deleteSensitiveWordModal"
+                                                            data-word-id="{{ word.id }}"
+                                                            data-word="{{ word.word }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 暂无广告法敏感词。您可以点击"添加敏感词"按钮添加，或者导入预设的广告法敏感词库。
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" id="importAdWordsBtn">
+                                <i class="fas fa-download"></i> 导入预设广告法敏感词库
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 自定义敏感词 -->
+                        <div class="tab-pane fade" id="custom" role="tabpanel" aria-labelledby="custom-tab">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>自定义敏感词列表</h5>
+                                <div class="input-group w-50">
+                                    <input type="text" class="form-control" id="customSearchInput" placeholder="搜索自定义敏感词...">
+                                    <button class="btn btn-outline-secondary" type="button" id="customSearchBtn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {% if custom_words %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="customWordsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>敏感词</th>
+                                            <th>替换词</th>
+                                            <th>创建时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for word in custom_words %}
+                                        <tr>
+                                            <td>{{ word.word }}</td>
+                                            <td>{{ word.replacement or '***' }}</td>
+                                            <td>{{ word.created_at.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-word-btn" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#editSensitiveWordModal"
+                                                            data-word-id="{{ word.id }}"
+                                                            data-word="{{ word.word }}"
+                                                            data-replacement="{{ word.replacement or '' }}"
+                                                            data-category="{{ word.category }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#deleteSensitiveWordModal"
+                                                            data-word-id="{{ word.id }}"
+                                                            data-word="{{ word.word }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 暂无自定义敏感词。点击"添加敏感词"按钮开始添加。
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">敏感词过滤说明</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-gavel text-danger"></i> 法律违禁词</h5>
+                                    <p class="card-text">包含违反法律法规的词汇，如涉及政治、暴力、色情等内容。这些词汇在内容生成和发布时会被自动过滤或替换。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-ad text-warning"></i> 广告法敏感词</h5>
+                                    <p class="card-text">包含违反广告法的词汇，如"最好"、"第一"、"首选"等绝对化用语。这些词汇在内容生成和发布时会被自动过滤或替换。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-user-edit text-primary"></i> 自定义敏感词</h5>
+                                    <p class="card-text">您可以添加自定义的敏感词，这些词汇在内容生成和发布时会被自动过滤或替换。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加敏感词模态框 -->
+<div class="modal fade" id="addSensitiveWordModal" tabindex="-1" aria-labelledby="addSensitiveWordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSensitiveWordModalLabel">添加敏感词</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('main.add_sensitive_word') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="word" class="form-label">敏感词</label>
+                        <input type="text" class="form-control" id="word" name="word" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="replacement" class="form-label">替换词 (可选)</label>
+                        <input type="text" class="form-control" id="replacement" name="replacement" placeholder="留空则默认替换为 ***">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">分类</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="legal">法律违禁词</option>
+                            <option value="ad">广告法敏感词</option>
+                            <option value="custom" selected>自定义敏感词</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑敏感词模态框 -->
+<div class="modal fade" id="editSensitiveWordModal" tabindex="-1" aria-labelledby="editSensitiveWordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSensitiveWordModalLabel">编辑敏感词</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editSensitiveWordForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_word" class="form-label">敏感词</label>
+                        <input type="text" class="form-control" id="edit_word" name="word" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_replacement" class="form-label">替换词 (可选)</label>
+                        <input type="text" class="form-control" id="edit_replacement" name="replacement" placeholder="留空则默认替换为 ***">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_category" class="form-label">分类</label>
+                        <select class="form-select" id="edit_category" name="category" required>
+                            <option value="legal">法律违禁词</option>
+                            <option value="ad">广告法敏感词</option>
+                            <option value="custom">自定义敏感词</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存更改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除敏感词确认模态框 -->
+<div class="modal fade" id="deleteSensitiveWordModal" tabindex="-1" aria-labelledby="deleteSensitiveWordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteSensitiveWordModalLabel">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除敏感词 <span id="wordToDelete" class="fw-bold"></span> 吗？此操作不可撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form id="deleteSensitiveWordForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导入敏感词模态框 -->
+<div class="modal fade" id="importSensitiveWordsModal" tabindex="-1" aria-labelledby="importSensitiveWordsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importSensitiveWordsModalLabel">导入敏感词</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('main.import_sensitive_words') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="import_file" class="form-label">敏感词文件 (TXT/CSV)</label>
+                        <input type="file" class="form-control" id="import_file" name="import_file" accept=".txt,.csv" required>
+                        <div class="form-text">文件格式：每行一个敏感词，或者CSV格式（敏感词,替换词,分类）</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="import_category" class="form-label">默认分类</label>
+                        <select class="form-select" id="import_category" name="import_category">
+                            <option value="legal">法律违禁词</option>
+                            <option value="ad">广告法敏感词</option>
+                            <option value="custom" selected>自定义敏感词</option>
+                        </select>
+                        <div class="form-text">如果导入的文件中没有指定分类，则使用此默认分类</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">导入</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 表格搜索功能
+        function setupTableSearch(inputId, tableId) {
+            document.getElementById(inputId).addEventListener('keyup', function() {
+                var searchText = this.value.toLowerCase();
+                var table = document.getElementById(tableId);
+                var rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+                
+                for (var i = 0; i < rows.length; i++) {
+                    var wordCell = rows[i].getElementsByTagName('td')[0];
+                    var replacementCell = rows[i].getElementsByTagName('td')[1];
+                    
+                    if (wordCell) {
+                        var wordText = wordCell.textContent || wordCell.innerText;
+                        var replacementText = replacementCell ? (replacementCell.textContent || replacementCell.innerText) : '';
+                        
+                        if (wordText.toLowerCase().indexOf(searchText) > -1 || replacementText.toLowerCase().indexOf(searchText) > -1) {
+                            rows[i].style.display = "";
+                        } else {
+                            rows[i].style.display = "none";
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 设置各表格的搜索功能
+        setupTableSearch('legalSearchInput', 'legalWordsTable');
+        setupTableSearch('adSearchInput', 'adWordsTable');
+        setupTableSearch('customSearchInput', 'customWordsTable');
+        
+        // 编辑敏感词
+        var editWordBtns = document.querySelectorAll('.edit-word-btn');
+        if (editWordBtns.length > 0) {
+            editWordBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var wordId = this.getAttribute('data-word-id');
+                    var word = this.getAttribute('data-word');
+                    var replacement = this.getAttribute('data-replacement');
+                    var category = this.getAttribute('data-category');
+                    
+                    document.getElementById('edit_word').value = word;
+                    document.getElementById('edit_replacement').value = replacement;
+                    document.getElementById('edit_category').value = category;
+                    
+                    // 设置表单提交地址
+                    document.getElementById('editSensitiveWordForm').action = "{{ url_for('main.edit_sensitive_word', word_id=0) }}".replace('0', wordId);
+                });
+            });
+        }
+        
+        // 删除敏感词
+        var deleteSensitiveWordModal = document.getElementById('deleteSensitiveWordModal');
+        if (deleteSensitiveWordModal) {
+            deleteSensitiveWordModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var wordId = button.getAttribute('data-word-id');
+                var word = button.getAttribute('data-word');
+                
+                document.getElementById('wordToDelete').textContent = word;
+                document.getElementById('deleteSensitiveWordForm').action = "{{ url_for('main.delete_sensitive_word', word_id=0) }}".replace('0', wordId);
+            });
+        }
+        
+        // 导入预设敏感词库
+        document.getElementById('importLegalWordsBtn')?.addEventListener('click', function() {
+            if (confirm('确定要导入预设的法律违禁词库吗？这将添加约500个常见法律违禁词。')) {
+                fetch("{{ url_for('main.import_preset_sensitive_words') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify({
+                        category: 'legal'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('成功导入 ' + data.count + ' 个法律违禁词');
+                        window.location.reload();
+                    } else {
+                        alert('导入失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('导入失败:', error);
+                    alert('导入失败，请稍后重试');
+                });
+            }
+        });
+        
+        document.getElementById('importAdWordsBtn')?.addEventListener('click', function() {
+            if (confirm('确定要导入预设的广告法敏感词库吗？这将添加约300个常见广告法敏感词。')) {
+                fetch("{{ url_for('main.import_preset_sensitive_words') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify({
+                        category: 'ad'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('成功导入 ' + data.count + ' 个广告法敏感词');
+                        window.location.reload();
+                    } else {
+                        alert('导入失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('导入失败:', error);
+                    alert('导入失败，请稍后重试');
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

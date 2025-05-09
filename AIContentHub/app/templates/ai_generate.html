@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}AI生成文章 - AI内容创作平台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fas fa-robot"></i> AI生成文章</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回仪表盘
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cog"></i> 生成设置</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('ai_generate') }}" id="generateForm" class="needs-validation" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="topic" class="form-label">文章主题 <span class="text-danger">*</span></label>
+                            {{ form.topic(class="form-control", id="topic", placeholder="请输入文章主题，例如：人工智能在医疗领域的应用") }}
+                            <div class="form-text">请输入明确的主题，这将决定文章的核心内容</div>
+                            {% if form.topic.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.topic.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="keywords" class="form-label">关键词</label>
+                            {{ form.keywords(class="form-control", id="keywords", placeholder="请输入关键词，用逗号分隔") }}
+                            <div class="form-text">添加关键词可以让AI更好地理解您的需求，例如：人工智能,医疗诊断,远程医疗</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="outline" class="form-label">文章大纲</label>
+                            {{ form.outline(class="form-control", id="outline", rows="5", placeholder="可以提供文章大纲，每行一个章节，例如：\n1. 引言：人工智能在医疗领域的重要性\n2. 人工智能辅助诊断的应用\n3. 远程医疗中的AI应用\n...") }}
+                            <div class="form-text">如果不提供大纲，AI将自动生成合适的章节结构</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="style" class="form-label">文章风格</label>
+                                {{ form.style(class="form-select", id="style") }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tone" class="form-label">语气</label>
+                                {{ form.tone(class="form-select", id="tone") }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="min_length" class="form-label">最小字数</label>
+                                {{ form.min_length(class="form-control", id="min_length", type="number", min="1000", step="500") }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="max_length" class="form-label">最大字数</label>
+                                {{ form.max_length(class="form-control", id="max_length", type="number", min="1500", step="500") }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="ai_model" class="form-label">AI模型</label>
+                            {{ form.ai_model(class="form-select", id="ai_model") }}
+                            <div class="form-text">不同的AI模型可能会产生不同风格的内容</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.generate_images(class="form-check-input", id="generate_images") }}
+                                <label class="form-check-label" for="generate_images">
+                                    为文章章节自动生成配图
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.filter_sensitive(class="form-check-input", id="filter_sensitive") }}
+                                <label class="form-check-label" for="filter_sensitive">
+                                    自动过滤敏感词和违禁词
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" id="generateBtn">
+                                <i class="fas fa-robot me-2"></i>开始生成
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb"></i> 提示与建议</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> 如何获得更好的生成效果？</h6>
+                        <ul class="mb-0">
+                            <li>提供明确、具体的主题</li>
+                            <li>添加相关的关键词</li>
+                            <li>提供文章大纲可以更好地控制内容结构</li>
+                            <li>选择合适的文章风格和语气</li>
+                            <li>设置合理的字数范围</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> 注意事项</h6>
+                        <ul class="mb-0">
+                            <li>生成过程可能需要1-3分钟，请耐心等待</li>
+                            <li>生成的内容仅供参考，建议进行人工编辑和审核</li>
+                            <li>敏感词过滤可能不完全准确，请自行检查内容合规性</li>
+                        </ul>
+                    </div>
+                    
+                    <h6 class="mt-4 mb-3">热门主题推荐</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary topic-suggestion">人工智能最新发展</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary topic-suggestion">健康生活方式指南</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary topic-suggestion">数字营销策略</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary topic-suggestion">可持续发展与环保</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary topic-suggestion">职场技能提升</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> 最近生成的文章</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_generated %}
+                    <div class="list-group">
+                        {% for article in recent_generated %}
+                        <a href="{{ url_for('edit_article', article_id=article.id) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ article.title }}</h6>
+                                <small>{{ article.created_at.strftime('%m-%d') }}</small>
+                            </div>
+                            <small>
+                                {% if article.status == 'draft' %}
+                                <span class="badge bg-warning">草稿</span>
+                                {% elif article.status == 'published' %}
+                                <span class="badge bg-success">已发布</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ article.status }}</span>
+                                {% endif %}
+                            </small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">暂无生成记录</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 主题推荐点击事件
+        document.querySelectorAll('.topic-suggestion').forEach(function(button) {
+            button.addEventListener('click', function() {
+                document.getElementById('topic').value = this.textContent;
+            });
+        });
+        
+        // 表单提交事件
+        document.getElementById('generateForm').addEventListener('submit', function(event) {
+            var topicField = document.getElementById('topic');
+            
+            if (!topicField.value.trim()) {
+                event.preventDefault();
+                alert('请输入文章主题');
+                topicField.focus();
+                return false;
+            }
+            
+            // 显示加载动画
+            document.querySelector('.spinner-overlay').classList.remove('d-none');
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('generateBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 生成中...';
+        });
+        
+        // 字数限制验证
+        var minLengthField = document.getElementById('min_length');
+        var maxLengthField = document.getElementById('max_length');
+        
+        function validateLengths() {
+            var minLength = parseInt(minLengthField.value);
+            var maxLength = parseInt(maxLengthField.value);
+            
+            if (minLength > maxLength) {
+                maxLengthField.value = minLength;
+            }
+        }
+        
+        minLengthField.addEventListener('change', validateLengths);
+        maxLengthField.addEventListener('change', validateLengths);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI内容创作平台{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="wrapper">
+        <!-- 侧边栏 -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('main.dashboard') }}" class="d-flex align-items-center text-decoration-none">
+                    <i class="fas fa-robot me-2"></i>
+                    <span>AI内容创作平台</span>
+                </a>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li class="{{ 'active' if request.endpoint == 'main.dashboard' else '' }}">
+                    <a href="{{ url_for('main.dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i> 仪表盘
+                    </a>
+                </li>
+                <li class="{{ 'active' if request.endpoint == 'main.articles' else '' }}">
+                    <a href="{{ url_for('main.articles') }}">
+                        <i class="fas fa-file-alt"></i> 文章管理
+                    </a>
+                </li>
+                <li class="{{ 'active' if request.endpoint == 'main.drafts' else '' }}">
+                    <a href="{{ url_for('main.drafts') }}">
+                        <i class="fas fa-edit"></i> 草稿箱
+                    </a>
+                </li>
+                <li class="{{ 'active' if 'ai' in request.endpoint else '' }}">
+                    <a href="#aiSubmenu" data-bs-toggle="collapse" aria-expanded="{{ 'true' if 'ai' in request.endpoint else 'false' }}" class="dropdown-toggle">
+                        <i class="fas fa-brain"></i> AI创作
+                    </a>
+                    <ul class="collapse list-unstyled {{ 'show' if 'ai' in request.endpoint else '' }}" id="aiSubmenu">
+                        <li class="{{ 'active' if request.endpoint == 'main.ai_generate' else '' }}">
+                            <a href="{{ url_for('main.ai_generate') }}">
+                                <i class="fas fa-robot"></i> 生成文章
+                            </a>
+                        </li>
+                        <li class="{{ 'active' if request.endpoint == 'main.ai_generate_image' else '' }}">
+                            <a href="{{ url_for('main.ai_generate_image') }}">
+                                <i class="fas fa-image"></i> 生成图片
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="{{ 'active' if request.endpoint == 'main.tasks' else '' }}">
+                    <a href="{{ url_for('main.tasks') }}">
+                        <i class="fas fa-tasks"></i> 任务管理
+                    </a>
+                </li>
+                <li class="{{ 'active' if 'settings' in request.endpoint else '' }}">
+                    <a href="#settingsSubmenu" data-bs-toggle="collapse" aria-expanded="{{ 'true' if 'settings' in request.endpoint else 'false' }}" class="dropdown-toggle">
+                        <i class="fas fa-cog"></i> 设置
+                    </a>
+                    <ul class="collapse list-unstyled {{ 'show' if 'settings' in request.endpoint else '' }}" id="settingsSubmenu">
+                        <li class="{{ 'active' if request.endpoint == 'main.settings_profile' else '' }}">
+                            <a href="{{ url_for('main.settings_profile') }}">
+                                <i class="fas fa-user"></i> 个人资料
+                            </a>
+                        </li>
+                        <li class="{{ 'active' if request.endpoint == 'main.settings_api' else '' }}">
+                            <a href="{{ url_for('main.settings_api') }}">
+                                <i class="fas fa-key"></i> API配置
+                            </a>
+                        </li>
+                        <li class="{{ 'active' if request.endpoint == 'main.settings_platforms' else '' }}">
+                            <a href="{{ url_for('main.settings_platforms') }}">
+                                <i class="fas fa-share-alt"></i> 平台账号
+                            </a>
+                        </li>
+                        <li class="{{ 'active' if request.endpoint == 'main.settings_sensitive_words' else '' }}">
+                            <a href="{{ url_for('main.settings_sensitive_words') }}">
+                                <i class="fas fa-filter"></i> 敏感词管理
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <ul class="list-unstyled user-menu">
+                <li>
+                    <a href="#userSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class="fas fa-user-circle"></i> {{ current_user.username }}
+                    </a>
+                    <ul class="collapse list-unstyled" id="userSubmenu">
+                        <li>
+                            <a href="{{ url_for('main.settings_profile') }}">
+                                <i class="fas fa-id-card"></i> 个人资料
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('auth.logout') }}">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- 页面内容 -->
+        <div id="content">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn btn-light">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    
+                    <div class="ms-auto d-flex">
+                        <div class="dropdown">
+                            <button class="btn btn-light dropdown-toggle" type="button" id="createDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-plus"></i> 创建
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="createDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('main.new_article') }}"><i class="fas fa-file-alt"></i> 新建文章</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.ai_generate') }}"><i class="fas fa-robot"></i> AI生成文章</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.ai_generate_image') }}"><i class="fas fa-image"></i> AI生成图片</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.new_draft') }}"><i class="fas fa-edit"></i> 新建草稿</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="dropdown ms-2">
+                            <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><h6 class="dropdown-header">{{ current_user.username }}</h6></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.settings_profile') }}"><i class="fas fa-id-card"></i> 个人资料</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.settings_api') }}"><i class="fas fa-key"></i> API配置</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> 退出登录</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- 消息提示 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- 主要内容 -->
+            <main>
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    {% else %}
+    <!-- 未登录状态 -->
+    <div class="auth-wrapper">
+        <!-- 消息提示 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- 主要内容 -->
+        <main>
+            {% block auth_content %}{% endblock %}
+        </main>
+    </div>
+    {% endif %}
+    
+    <!-- 页脚 -->
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">© 2025 AI内容创作平台 | 版权所有</span>
+        </div>
+    </footer>
+    
+    <!-- 加载动画 -->
+    <div class="spinner-overlay d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 侧边栏切换
+            document.getElementById('sidebarCollapse').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('active');
+                document.getElementById('content').classList.toggle('active');
+            });
+            
+            // 自动隐藏消息提示
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
