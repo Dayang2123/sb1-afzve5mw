@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}API配置 - AI内容创作平台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fas fa-key"></i> API配置</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ url_for('main.new_api_config') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-plus"></i> 添加API配置
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">API配置列表</h5>
+                </div>
+                <div class="card-body">
+                    {% if configs %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>API名称</th>
+                                    <th>API密钥</th>
+                                    <th>API密钥(隐藏)</th>
+                                    <th>API URL</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for config in configs %}
+                                <tr>
+                                    <td>{{ config.api_name }}</td>
+                                    <td>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control form-control-sm api-key-field" value="{{ config.api_key }}" readonly>
+                                            <button class="btn btn-sm btn-outline-secondary toggle-password" type="button">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary copy-api-key" type="button" data-api-key="{{ config.api_key }}">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>{{ config.api_key[:4] + '****' + config.api_key[-4:] if config.api_key else '' }}</td>
+                                    <td>{{ config.api_url }}</td>
+                                    <td>
+                                        {% if config.is_active %}
+                                        <span class="badge bg-success">启用</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">禁用</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ config.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('main.edit_api_config', config_id=config.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteApiConfigModal" data-config-id="{{ config.id }}" data-config-name="{{ config.api_name }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 您还没有添加任何API配置。点击"添加API配置"按钮开始添加。
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">支持的AI服务</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">OpenAI</h5>
+                                    <p class="card-text">支持GPT-3.5和GPT-4模型，用于文章生成、内容优化和摘要生成。</p>
+                                    <a href="https://platform.openai.com/signup" target="_blank" class="btn btn-sm btn-outline-primary">获取API密钥</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">百度文心一言</h5>
+                                    <p class="card-text">百度AI大模型，支持中文创作、内容生成和知识问答。</p>
+                                    <a href="https://cloud.baidu.com/product/wenxinworkshop" target="_blank" class="btn btn-sm btn-outline-primary">获取API密钥</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">讯飞星火</h5>
+                                    <p class="card-text">科大讯飞AI大模型，擅长中文内容创作和专业领域知识。</p>
+                                    <a href="https://www.xfyun.cn/" target="_blank" class="btn btn-sm btn-outline-primary">获取API密钥</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">智谱AI</h5>
+                                    <p class="card-text">ChatGLM模型，支持中文创作和内容生成。</p>
+                                    <a href="https://open.bigmodel.cn/" target="_blank" class="btn btn-sm btn-outline-primary">获取API密钥</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Anthropic Claude</h5>
+                                    <p class="card-text">Claude模型，擅长长文本理解和创作。</p>
+                                    <a href="https://www.anthropic.com/product" target="_blank" class="btn btn-sm btn-outline-primary">获取API密钥</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Stability AI</h5>
+                                    <p class="card-text">Stable Diffusion模型，用于AI图像生成。</p>
+                                    <a href="https://stability.ai/api" target="_blank" class="btn btn-sm btn-outline-primary">获取API密钥</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除API配置确认模态框 -->
+<div class="modal fade" id="deleteApiConfigModal" tabindex="-1" aria-labelledby="deleteApiConfigModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteApiConfigModalLabel">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除API配置 <span id="configNameToDelete" class="fw-bold"></span> 吗？此操作不可撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form id="deleteApiConfigForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 显示/隐藏API密钥
+        document.querySelectorAll('.toggle-password').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var input = this.parentNode.querySelector('.api-key-field');
+                var icon = this.querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+        
+        // 复制API密钥
+        document.querySelectorAll('.copy-api-key').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var apiKey = this.getAttribute('data-api-key');
+                navigator.clipboard.writeText(apiKey).then(function() {
+                    // 显示复制成功提示
+                    var originalHTML = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check"></i>';
+                    button.classList.add('btn-success');
+                    button.classList.remove('btn-outline-secondary');
+                    
+                    setTimeout(function() {
+                        button.innerHTML = originalHTML;
+                        button.classList.remove('btn-success');
+                        button.classList.add('btn-outline-secondary');
+                    }, 2000);
+                });
+            });
+        });
+        
+        // 删除API配置
+        var deleteApiConfigModal = document.getElementById('deleteApiConfigModal');
+        if (deleteApiConfigModal) {
+            deleteApiConfigModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var configId = button.getAttribute('data-config-id');
+                var configName = button.getAttribute('data-config-name');
+                
+                document.getElementById('configNameToDelete').textContent = configName;
+                document.getElementById('deleteApiConfigForm').action = "{{ url_for('main.delete_api_config', config_id=0) }}".replace('0', configId);
+            });
+        }
+    });
+</script>
+{% endblock %}

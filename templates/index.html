@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}AI内容创作平台 - 首页{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center mb-5">
+        <h1 class="display-4">AI内容创作平台</h1>
+        <p class="lead">利用人工智能技术，轻松创作高质量内容，一键发布到各大平台</p>
+        {% if not current_user.is_authenticated %}
+        <div class="mt-4">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-2">登录</a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg">注册</a>
+        </div>
+        {% else %}
+        <div class="mt-4">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">进入仪表盘</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-robot fa-4x text-primary mb-3"></i>
+                <h3 class="card-title">AI内容生成</h3>
+                <p class="card-text">利用先进的AI技术，自动生成高质量、原创的文章内容，支持多种风格和主题。</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-image fa-4x text-primary mb-3"></i>
+                <h3 class="card-title">智能配图</h3>
+                <p class="card-text">根据文章内容自动生成相关图片，提升文章质量和阅读体验。</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-share-alt fa-4x text-primary mb-3"></i>
+                <h3 class="card-title">一键发布</h3>
+                <p class="card-text">支持一键发布到微信公众号、知乎、头条号、百家号等多个平台。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-shield-alt fa-4x text-primary mb-3"></i>
+                <h3 class="card-title">内容安全</h3>
+                <p class="card-text">自动过滤法律违禁词和广告法敏感词，确保内容合规。</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-newspaper fa-4x text-primary mb-3"></i>
+                <h3 class="card-title">热点采集</h3>
+                <p class="card-text">自动采集国内外热点资讯，快速生成相关深度文章。</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-4x text-primary mb-3"></i>
+                <h3 class="card-title">数据分析</h3>
+                <p class="card-text">提供详细的内容创作和发布数据分析，帮助优化内容策略。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-12 text-center">
+        <h2 class="mb-4">为什么选择我们？</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        支持多种AI模型，包括OpenAI、百度文心一言等
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        自动生成3000字以上的深度文章，内容丰富有深度
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        智能过滤敏感词，确保内容合规
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        支持多平台一键发布，提高工作效率
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        完善的内容管理系统，包括草稿箱、历史记录等
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

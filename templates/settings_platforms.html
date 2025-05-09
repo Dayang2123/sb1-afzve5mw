@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}平台账号管理 - AI内容创作平台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fas fa-share-alt"></i> 平台账号管理</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addPlatformAccountModal">
+                    <i class="fas fa-plus"></i> 添加平台账号
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">平台账号列表</h5>
+                </div>
+                <div class="card-body">
+                    {% if accounts %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>平台名称</th>
+                                    <th>账号名称</th>
+                                    <th>账号/AppID</th>
+                                    <th>状态</th>
+                                    <th>最后发布时间</th>
+                                    <th>发布文章数</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in accounts %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="platform-icon me-2">
+                                                {% if account.platform_type == 'wechat' %}
+                                                <i class="fab fa-weixin text-success"></i>
+                                                {% elif account.platform_type == 'zhihu' %}
+                                                <i class="fas fa-book-open text-primary"></i>
+                                                {% elif account.platform_type == 'toutiao' %}
+                                                <i class="fas fa-fire text-danger"></i>
+                                                {% elif account.platform_type == 'baidu' %}
+                                                <i class="fas fa-paw text-primary"></i>
+                                                {% elif account.platform_type == 'sohu' %}
+                                                <i class="fas fa-globe text-info"></i>
+                                                {% elif account.platform_type == 'weibo' %}
+                                                <i class="fab fa-weibo text-danger"></i>
+                                                {% else %}
+                                                <i class="fas fa-share-alt text-secondary"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                {% if account.platform_type == 'wechat' %}
+                                                微信公众号
+                                                {% elif account.platform_type == 'zhihu' %}
+                                                知乎
+                                                {% elif account.platform_type == 'toutiao' %}
+                                                头条号
+                                                {% elif account.platform_type == 'baidu' %}
+                                                百家号
+                                                {% elif account.platform_type == 'sohu' %}
+                                                搜狐号
+                                                {% elif account.platform_type == 'weibo' %}
+                                                微博
+                                                {% else %}
+                                                {{ account.platform_type }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ account.account_name }}</td>
+                                    <td>{{ account.account_id }}</td>
+                                    <td>
+                                        {% if account.is_active %}
+                                        <span class="badge bg-success">已连接</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">未连接</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ account.last_publish_time.strftime('%Y-%m-%d %H:%M') if account.last_publish_time else '从未' }}</td>
+                                    <td>{{ account.published_count }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary edit-account-btn" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editPlatformAccountModal"
+                                                    data-account-id="{{ account.id }}"
+                                                    data-platform-type="{{ account.platform_type }}"
+                                                    data-account-name="{{ account.account_name }}"
+                                                    data-account-id="{{ account.account_id }}"
+                                                    data-app-id="{{ account.app_id }}"
+                                                    data-app-secret="{{ account.app_secret }}"
+                                                    data-is-active="{{ account.is_active }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deletePlatformAccountModal"
+                                                    data-account-id="{{ account.id }}"
+                                                    data-account-name="{{ account.account_name }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 您还没有添加任何平台账号。点击"添加平台账号"按钮开始添加。
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">支持的平台</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fab fa-weixin text-success"></i> 微信公众号</h5>
+                                    <p class="card-text">通过AppID和AppSecret连接微信公众号，自动发布文章。</p>
+                                    <a href="https://mp.weixin.qq.com/" target="_blank" class="btn btn-sm btn-outline-success">前往平台</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-book-open text-primary"></i> 知乎</h5>
+                                    <p class="card-text">连接知乎账号，自动发布文章到知乎专栏。</p>
+                                    <a href="https://www.zhihu.com/" target="_blank" class="btn btn-sm btn-outline-primary">前往平台</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-fire text-danger"></i> 头条号</h5>
+                                    <p class="card-text">连接头条号账号，自动发布文章。</p>
+                                    <a href="https://mp.toutiao.com/" target="_blank" class="btn btn-sm btn-outline-danger">前往平台</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-paw text-primary"></i> 百家号</h5>
+                                    <p class="card-text">连接百家号账号，自动发布文章。</p>
+                                    <a href="https://baijiahao.baidu.com/" target="_blank" class="btn btn-sm btn-outline-primary">前往平台</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fas fa-globe text-info"></i> 搜狐号</h5>
+                                    <p class="card-text">连接搜狐号账号，自动发布文章。</p>
+                                    <a href="https://mp.sohu.com/" target="_blank" class="btn btn-sm btn-outline-info">前往平台</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="fab fa-weibo text-danger"></i> 微博</h5>
+                                    <p class="card-text">连接微博账号，自动发布文章。</p>
+                                    <a href="https://weibo.com/" target="_blank" class="btn btn-sm btn-outline-danger">前往平台</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加平台账号模态框 -->
+<div class="modal fade" id="addPlatformAccountModal" tabindex="-1" aria-labelledby="addPlatformAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPlatformAccountModalLabel">添加平台账号</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('main.add_platform_account') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="platform_type" class="form-label">平台类型</label>
+                        <select class="form-select" id="platform_type" name="platform_type" required>
+                            <option value="" selected disabled>请选择平台类型</option>
+                            <option value="wechat">微信公众号</option>
+                            <option value="zhihu">知乎</option>
+                            <option value="toutiao">头条号</option>
+                            <option value="baidu">百家号</option>
+                            <option value="sohu">搜狐号</option>
+                            <option value="weibo">微博</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="account_name" class="form-label">账号名称</label>
+                        <input type="text" class="form-control" id="account_name" name="account_name" placeholder="例如：我的公众号" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="account_id" class="form-label">账号ID/用户名</label>
+                        <input type="text" class="form-control" id="account_id" name="account_id" placeholder="账号ID或用户名" required>
+                    </div>
+                    
+                    <div class="mb-3 wechat-fields">
+                        <label for="app_id" class="form-label">AppID</label>
+                        <input type="text" class="form-control" id="app_id" name="app_id" placeholder="微信公众号AppID">
+                    </div>
+                    
+                    <div class="mb-3 wechat-fields">
+                        <label for="app_secret" class="form-label">AppSecret</label>
+                        <input type="password" class="form-control" id="app_secret" name="app_secret" placeholder="微信公众号AppSecret">
+                    </div>
+                    
+                    <div class="mb-3 other-fields">
+                        <label for="password" class="form-label">账号密码</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="账号密码">
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">启用此账号</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑平台账号模态框 -->
+<div class="modal fade" id="editPlatformAccountModal" tabindex="-1" aria-labelledby="editPlatformAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPlatformAccountModalLabel">编辑平台账号</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editPlatformAccountForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_platform_type" class="form-label">平台类型</label>
+                        <select class="form-select" id="edit_platform_type" name="platform_type" required disabled>
+                            <option value="wechat">微信公众号</option>
+                            <option value="zhihu">知乎</option>
+                            <option value="toutiao">头条号</option>
+                            <option value="baidu">百家号</option>
+                            <option value="sohu">搜狐号</option>
+                            <option value="weibo">微博</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_account_name" class="form-label">账号名称</label>
+                        <input type="text" class="form-control" id="edit_account_name" name="account_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_account_id" class="form-label">账号ID/用户名</label>
+                        <input type="text" class="form-control" id="edit_account_id" name="account_id" required>
+                    </div>
+                    
+                    <div class="mb-3 wechat-fields">
+                        <label for="edit_app_id" class="form-label">AppID</label>
+                        <input type="text" class="form-control" id="edit_app_id" name="app_id">
+                    </div>
+                    
+                    <div class="mb-3 wechat-fields">
+                        <label for="edit_app_secret" class="form-label">AppSecret</label>
+                        <input type="password" class="form-control" id="edit_app_secret" name="app_secret" placeholder="留空表示不修改">
+                        <div class="form-text">如不修改密钥，请留空</div>
+                    </div>
+                    
+                    <div class="mb-3 other-fields">
+                        <label for="edit_password" class="form-label">账号密码</label>
+                        <input type="password" class="form-control" id="edit_password" name="password" placeholder="留空表示不修改">
+                        <div class="form-text">如不修改密码，请留空</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit_is_active" name="is_active">
+                        <label class="form-check-label" for="edit_is_active">启用此账号</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存更改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除平台账号确认模态框 -->
+<div class="modal fade" id="deletePlatformAccountModal" tabindex="-1" aria-labelledby="deletePlatformAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deletePlatformAccountModalLabel">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除平台账号 <span id="accountNameToDelete" class="fw-bold"></span> 吗？此操作不可撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form id="deletePlatformAccountForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 根据平台类型显示/隐藏相应字段
+        function toggleFields(platformType, prefix = '') {
+            var wechatFields = document.querySelectorAll('.' + prefix + 'wechat-fields');
+            var otherFields = document.querySelectorAll('.' + prefix + 'other-fields');
+            
+            if (platformType === 'wechat') {
+                wechatFields.forEach(function(field) {
+                    field.style.display = 'block';
+                });
+                otherFields.forEach(function(field) {
+                    field.style.display = 'none';
+                });
+            } else {
+                wechatFields.forEach(function(field) {
+                    field.style.display = 'none';
+                });
+                otherFields.forEach(function(field) {
+                    field.style.display = 'block';
+                });
+            }
+        }
+        
+        // 初始隐藏所有特定平台字段
+        toggleFields('');
+        
+        // 添加平台账号时，根据选择的平台类型显示相应字段
+        var platformTypeSelect = document.getElementById('platform_type');
+        if (platformTypeSelect) {
+            platformTypeSelect.addEventListener('change', function() {
+                toggleFields(this.value);
+            });
+        }
+        
+        // 编辑平台账号
+        var editAccountBtns = document.querySelectorAll('.edit-account-btn');
+        if (editAccountBtns.length > 0) {
+            editAccountBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var accountId = this.getAttribute('data-account-id');
+                    var platformType = this.getAttribute('data-platform-type');
+                    var accountName = this.getAttribute('data-account-name');
+                    var accountIdValue = this.getAttribute('data-account-id');
+                    var appId = this.getAttribute('data-app-id');
+                    var isActive = this.getAttribute('data-is-active') === 'True';
+                    
+                    document.getElementById('edit_platform_type').value = platformType;
+                    document.getElementById('edit_account_name').value = accountName;
+                    document.getElementById('edit_account_id').value = accountIdValue;
+                    
+                    if (platformType === 'wechat' && appId) {
+                        document.getElementById('edit_app_id').value = appId;
+                    }
+                    
+                    document.getElementById('edit_is_active').checked = isActive;
+                    
+                    // 设置表单提交地址
+                    document.getElementById('editPlatformAccountForm').action = "{{ url_for('main.edit_platform_account', account_id=0) }}".replace('0', accountId);
+                    
+                    // 显示/隐藏相应字段
+                    toggleFields(platformType, 'edit_');
+                });
+            });
+        }
+        
+        // 删除平台账号
+        var deletePlatformAccountModal = document.getElementById('deletePlatformAccountModal');
+        if (deletePlatformAccountModal) {
+            deletePlatformAccountModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var accountId = button.getAttribute('data-account-id');
+                var accountName = button.getAttribute('data-account-name');
+                
+                document.getElementById('accountNameToDelete').textContent = accountName;
+                document.getElementById('deletePlatformAccountForm').action = "{{ url_for('main.delete_platform_account', account_id=0) }}".replace('0', accountId);
+            });
+        }
+    });
+</script>
+{% endblock %}
