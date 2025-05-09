@@ -106,3 +106,9 @@ AIContentHub是一个功能强大的内容创作和发布平台，具有以下�
 
 ## 联系方式
 如有任何问题或建议，请联系开发者。
+
+## 在线访问
+您可以通过以下链接访问项目：
+- [项目GitHub仓库](https://github.com/Dayang2123/sb1-afzve5mw/tree/ai-content-hub)
+- [下载项目代码](https://work-2-rgodiiaotguweuxy.prod-runtime.all-hands.dev/AIContentHub.zip)
+- [在线演示](https://work-1-rgodiiaotguweuxy.prod-runtime.all-hands.dev/)
